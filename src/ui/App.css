@@ -4,19 +4,43 @@
   padding: 2rem;
   text-align: center;
 }
+.instrument-icon-section {
+  display: flex;
+  justify-content: center;
+}
 
-.logo {
+.music-player-section {
+  display: flex;
+  justify-content: center;
+}
+
+.rate-section {
+  display: flex;
+  justify-content: space-between;
+}
+
+.icon {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
-  transition: filter 300ms;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 300ms;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.icon:hover {
+  filter: drop-shadow(0 0 2em #ffffffaa);
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+
+.settings-icon {
+  position: absolute;
+  inset:  0 0 auto auto;
+  height: 4em;
+  cursor: pointer;
 }
+
+.settings-icon:active {
+  transform: scale(0.9);
+}
+
+
 
 @keyframes logo-spin {
   from {

@@ -1,0 +1,152 @@
+.music-player-container {
+  background-color: #3a3a3a;
+  border-radius: 0 0 20px 20px;
+  padding: 20px;
+  border: 1px solid #4a4a4a;
+}
+
+.instrument-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.current-instrument {
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.song-title {
+  font-size: 12px;
+  color: #aaaaaa;
+}
+
+.progress-section {
+  margin-bottom: 20px;
+}
+
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #aaaaaa;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.progress-track {
+  height: 4px;
+  background: #4a4a4a;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #ff6b35;
+  border-radius: 2px;
+  width: 35%;
+  transition: width 0.5s ease;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.control-button {
+  background: #4a4a4a;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.control-button:hover {
+  background: #5a5a5a;
+}
+
+.control-button:active {
+  background: #3a3a3a;
+}
+
+.play-pause-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 26px;
+}
+
+.next-instrument-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 14px;
+  position: relative;
+}
+
+.next-instrument-btn::before {
+  content: "🎸";
+  font-size: 26px;
+}
+
+.next-instrument-btn.piano::before {
+  content: "🎹";
+}
+
+.next-instrument-btn.drums::before {
+  content: "🥁";
+}
+
+.next-instrument-btn.violin::before {
+  content: "🎻";
+}
+
+/* Playing state animation */
+.playing .progress-fill {
+  background: linear-gradient(90deg, #ff6b35, #ff8c42, #ff6b35);
+  background-size: 200% 100%;
+  animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .music-slider-container {
+    margin: 10px;
+    padding: 16px;
+  }
+
+  .controls {
+    gap: 12px;
+  }
+
+  .play-pause-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .next-instrument-btn {
+    width: 40px;
+    height: 40px;
+  }
+}

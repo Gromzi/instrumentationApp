@@ -1,29 +1,29 @@
 import { useState } from "react"
-import reactLogo from "./assets/react.svg"
+import guitarIcon from "./assets/guitar.png"
 import "./App.css"
+import InstrumentIcon from "./components/InstrumentIcon/InstrumentIcon"
+import MusicSlider from "./components/MusicPlayer/MusicPlayer"
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
     <>
-      <div>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
+      {/* <img
+        src={settingsIcon}
+        className="icon settings-icon"
+        alt="Settings icon"
+      /> */}
+
       <h1>Instrumentation App</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+
+      <div className="instrument-icon-section">
+        <InstrumentIcon icon={guitarIcon} active={false} />
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      <div className="music-slider-section">
+        <MusicSlider />
+      </div>
     </>
   )
 }

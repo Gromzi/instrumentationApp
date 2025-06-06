@@ -1,0 +1,21 @@
+.rate-icon {
+  height: 2.5em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 300ms;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rate-icon:active {
+  transform: scale(0.9);
+  animation-play-state: paused; 
+}
+
+.like:hover {
+  filter: drop-shadow(0 0 2em #65f124d8);
+}
+
+.dislike:hover {
+  filter: drop-shadow(0 0 2em #f81010);
+}
