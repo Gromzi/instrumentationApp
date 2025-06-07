@@ -3,7 +3,15 @@ import path from "path"
 import { isDev } from "./util.js"
 
 app.on("ready", () => {
-  const mainWindow = new BrowserWindow({})
+  const mainWindow = new BrowserWindow({
+    width: 580,
+    minWidth: 580,
+
+    height: 640,
+    minHeight: 640,
+
+    center: true,
+  })
 
   if (isDev()) {
     mainWindow.loadURL("http://localhost:5123")
