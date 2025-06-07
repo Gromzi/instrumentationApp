@@ -1,6 +1,6 @@
 import { RateButtonProps } from "./RateButtonProps"
-import likeIcon from "../../assets/like.png"
-import dislikeIcon from "../../assets/dislike.png"
+import likeIcon from "../../assets/like.svg"
+import dislikeIcon from "../../assets/dislike.svg"
 import "./RateButtonStyles.css"
 
 const RateIcon = (props: RateButtonProps) => {

@@ -1,5 +1,7 @@
 import RateIcon from "../RateButton/RateButton"
 import "./MusicPlayerStyles.css"
+import playIcon from "../../assets/play.svg"
+import { InstrumentIcons } from "../../constants/InstrumentIconsImports"
 
 const MusicPlayer = () => {
   return (
@@ -26,14 +28,16 @@ const MusicPlayer = () => {
         <RateIcon type="like" />
 
         <button className="control-button play-pause-btn" id="playPauseBtn">
-          ▶
+          <img src={playIcon} alt="Play icon" />
         </button>
 
         <button
           className="control-button next-instrument-btn violin"
           id="nextInstrumentBtn"
           title="Next Instrument"
-        />
+        >
+          <img src={InstrumentIcons.violin} alt="Next instrument icon" />
+        </button>
 
         <RateIcon type="dislike" />
       </div>

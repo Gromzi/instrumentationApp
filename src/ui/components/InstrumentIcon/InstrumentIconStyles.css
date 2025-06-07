@@ -19,9 +19,31 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
+.glow {
+  filter: drop-shadow(0 0 2em #ffffffaa);
+}
+
 .instrument-icon-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   width: 100%;
+  height: 240px;
   border-radius: 20px 20px 0 0;
   border: 1px solid #4a4a4a;
   background-color: #3a3a3a
+}
+
+.three-dots-container {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  font-size: 5px;
+  cursor: pointer;
+}
+
+.three-dots-container:active {
+  transform: scale(0.9);
 }

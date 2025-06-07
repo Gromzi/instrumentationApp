@@ -92,22 +92,22 @@
   position: relative;
 }
 
-.next-instrument-btn::before {
+/* .next-instrument-btn::before {
   content: "🎸";
   font-size: 26px;
-}
+} */
 
-.next-instrument-btn.piano::before {
+/* .next-instrument-btn.piano::before {
   content: "🎹";
-}
+} */
 
 .next-instrument-btn.drums::before {
   content: "🥁";
 }
 
-.next-instrument-btn.violin::before {
+/* .next-instrument-btn.violin::before {
   content: "🎻";
-}
+} */
 
 /* Playing state animation */
 .playing .progress-fill {

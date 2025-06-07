@@ -1,17 +1,19 @@
 import { InstrumentIconProps } from "./InstrumentIconProps"
 import "./InstrumentIconStyles.css"
+import threeDotsIcon from "../../assets/three-dots.svg"
 
 const InstrumentIcon = (props: InstrumentIconProps) => {
   return (
     <div className="instrument-icon-container">
-      {/* <img
-        src={props.icon}
-        className={props.active ? "icon pulse" : "icon"}
-        alt="Instrument logo"
-      /> */}
-      <div style={{ fontSize: "6rem" }} className="pulse">
-        🎸
+      <div className="three-dots-container">
+        <img src={threeDotsIcon} alt="Settings" className="three-dots icon" />
       </div>
+
+      <img
+        src={props.icon}
+        className={props.active ? "icon pulse glow" : "icon"}
+        alt="Instrument logo"
+      />
     </div>
   )
 }
