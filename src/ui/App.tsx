@@ -1,14 +1,12 @@
-import { useState } from "react"
 import "./App.css"
 import InstrumentIcon from "./components/InstrumentIcon/InstrumentIcon"
 import MusicSlider from "./components/MusicPlayer/MusicPlayer"
 import { InstrumentIcons } from "./constants/InstrumentIconsImports"
+import {MidiPlayerProvider} from "./hooks/useMidiPlayer.tsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
+    return (
+    <MidiPlayerProvider>
       <div className="instrument-icon-section">
         <InstrumentIcon icon={InstrumentIcons.guitar} active={true} />
       </div>
@@ -16,7 +14,7 @@ function App() {
       <div className="music-slider-section">
         <MusicSlider />
       </div>
-    </>
+    </MidiPlayerProvider>
   )
 }
 
