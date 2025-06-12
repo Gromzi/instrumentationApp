@@ -34,6 +34,12 @@ type MidiPlayerContextType = {
   handleInstrumentChange: (to: InstrumentType) => Promise<void>;
   handleNextInstrument: () => Promise<void>;
   formatTime: (sec: number) => string;
+  selectedInstruments: string[];
+  setSelectedInstruments: React.Dispatch<React.SetStateAction<string[]>>;
+  fragmentLength: number;
+  setFragmentLength: React.Dispatch<React.SetStateAction<number>>;
+  volume: number;
+  setVolume: React.Dispatch<React.SetStateAction<number>>;
 };
 
 const MidiPlayerContext = createContext<MidiPlayerContextType | undefined>(undefined);
@@ -48,6 +54,14 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   const [midiLoaded, setMidiLoaded] = useState(false);
   const samplerRef = useRef<any>(null);
   const loadedInstrumentsRef = useRef<{[key: string]: any}>({});
+    const [selectedInstruments, setSelectedInstruments] = useState<string[]>(['piano', 'guitar', 'flute']);
+    const [fragmentLength, setFragmentLength] = useState<number>(10); // Domyślna długość fragmentu 30 sekund
+  const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState<number>(0);
+  const [currentStart, setCurrentStart] = useState<number>(0);
+  const [paused, setPaused] = useState<boolean>(false);
+  const [volume, setVolume] = useState<number>(80); // 0-100
+  const volumeNodeRef = useRef<any>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const initInstruments = async () => {
@@ -57,9 +71,10 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         baseUrl: "/src/samples/"  // Dodano ukośnik na początku
       });
 
-      // Zapisz samplery
+      // Utwórz Tone.Volume i podepnij do każdego samplera
+      volumeNodeRef.current = new Tone.Volume((volume - 80) * 0.5).toDestination();
       Object.entries(samples).forEach(([key, sampler]) => {
-        sampler.toDestination();
+        sampler.connect(volumeNodeRef.current);
         loadedInstrumentsRef.current[key] = sampler;
       });
 
@@ -164,6 +179,13 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
     };
   }, [isPlaying]);
 
+  // Aktualizuj głośność przy zmianie volume
+  useEffect(() => {
+    if (volumeNodeRef.current) {
+      volumeNodeRef.current.volume.value = (volume - 80) * 0.5;
+    }
+  }, [volume]);
+
   const loadMidiFile = async (preservePlayback = false) => {
     try {
       // Upewnij się, że sampler jest załadowany przed kontynuowaniem
@@ -241,45 +263,9 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const handleStart = async () => {
-    await Tone.start();
-    Tone.getTransport().start();
-    setIsPlaying(true);
-  };
-
-  const handlePause = () => {
-    Tone.getTransport().pause();
-    setIsPlaying(false);
-  };
-
-  const handleStop = () => {
-    Tone.getTransport().stop();
-    setIsPlaying(false);
-    setCurrentTime(0);
-  };
-
-  const handleInstrumentChange = async (toInstrument: InstrumentType) => {
-    setInstrument(toInstrument);
-    if (loaded) {
-      await loadMidiFile(true);
-    }
-  };
-
-  const handleNextInstrument = async () => {
-    const currentIndex = INSTRUMENTS.findIndex(i => i.value === instrument.value);
-    const nextIndex = (currentIndex + 1) % INSTRUMENTS.length;
-    const nextInstrument = INSTRUMENTS[nextIndex];
-    await handleInstrumentChange(nextInstrument);
-  };
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
-
   return (
-      <MidiPlayerContext.Provider value={{
+    <MidiPlayerContext.Provider
+      value={{
         duration,
         currentTime,
         songTitle,
@@ -287,21 +273,145 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         loaded,
         instrument,
         INSTRUMENTS,
-        handleStart,
-        handlePause,
-        handleStop,
-        handleInstrumentChange,
-        handleNextInstrument,
-        formatTime
-      }}>
-        {children}
-      </MidiPlayerContext.Provider>
+        handleStart: async () => {
+          try {
+            if (!samplerRef.current?.loaded) return;
+            setPaused(false);
+            const response = await fetch('/src/music/pirates_of_the_caribbean.mid');
+            const arrayBuffer = await response.arrayBuffer();
+            const midi = new Midi(arrayBuffer);
+            setDuration(midi.duration);
+
+            let stopPlayback = false;
+
+            const instrumentMap: Record<string, string> = {
+              piano: 'piano',
+              guitar: 'guitar-acoustic',
+              flute: 'flute',
+              harp: 'harp',
+              violin: 'violin',
+              xylophone: 'xylophone',
+              clarinet: 'clarinet',
+              contrabass: 'contrabass',
+              cello: 'cello',
+            };
+
+            const playNextFragment = async (instrumentIdx: number, start: number) => {
+              if (stopPlayback || paused || start >= midi.duration) {
+                setIsPlaying(false);
+                setPaused(false);
+                setCurrentInstrumentIndex(0);
+                setCurrentStart(0);
+                return;
+              }
+              // Ustaw sampler na wybrany instrument (cyklicznie)
+              const instrumentValue = selectedInstruments[instrumentIdx % selectedInstruments.length];
+              const samplerKey = instrumentMap[instrumentValue] || instrumentValue;
+              if (loadedInstrumentsRef.current[samplerKey]) {
+                samplerRef.current = loadedInstrumentsRef.current[samplerKey];
+              }
+              setInstrument(INSTRUMENTS.find(i => i.value === instrumentValue) || INSTRUMENTS[0]);
+              // Wyczyść poprzednie eventy
+              Tone.getTransport().cancel();
+              Tone.getTransport().stop();
+              Tone.getTransport().position = start;
+
+              // Filtruj nuty do fragmentu
+              const tracksToPlay = midi.tracks.filter(track =>
+                instrumentValue === (track.name?.toLowerCase() || '')
+              );
+              const tracks = tracksToPlay.length > 0 ? tracksToPlay : midi.tracks;
+              tracks.forEach(track => {
+                track.notes.forEach(note => {
+                  if (note.time >= start && note.time < start + fragmentLength) {
+                    Tone.getTransport().schedule((time) => {
+                      if (samplerRef.current?.loaded) {
+                        samplerRef.current.triggerAttackRelease(
+                          note.name,
+                          note.duration,
+                          time,
+                          note.velocity
+                        );
+                      }
+                    }, note.time);
+                  }
+                });
+              });
+
+              setIsPlaying(true);
+              setCurrentTime(start);
+              setCurrentInstrumentIndex(instrumentIdx);
+              setCurrentStart(start);
+              Tone.getTransport().start(undefined, start);
+
+              // Ustaw timer na zakończenie fragmentu
+              if (timeoutRef.current) clearTimeout(timeoutRef.current);
+              timeoutRef.current = setTimeout(() => {
+                if (paused || stopPlayback) return;
+                Tone.getTransport().pause();
+                setIsPlaying(false);
+                setCurrentInstrumentIndex(instrumentIdx + 1);
+                setCurrentStart(start + fragmentLength);
+                playNextFragment(instrumentIdx + 1, start + fragmentLength);
+              }, Math.min(fragmentLength, midi.duration - start) * 1000);
+            };
+
+            playNextFragment(currentInstrumentIndex, currentStart);
+          } catch (error) {
+            setIsPlaying(false);
+            setPaused(false);
+            setCurrentInstrumentIndex(0);
+            setCurrentStart(0);
+            console.error('Błąd podczas odtwarzania:', error);
+          }
+        },
+        handlePause: () => {
+          setIsPlaying(false);
+          setPaused(true);
+          Tone.getTransport().pause();
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        },
+        handleStop: () => {
+          setIsPlaying(false);
+          setPaused(false);
+          setCurrentInstrumentIndex(0);
+          setCurrentStart(0);
+          setCurrentTime(0);
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          Tone.getTransport().stop();
+          Tone.getTransport().position = 0;
+        },
+        handleInstrumentChange: async (to: InstrumentType) => {
+          if (instrument.value !== to.value) {
+            setInstrument(to);
+          }
+        },
+        handleNextInstrument: async () => {
+          const currentIndex = INSTRUMENTS.findIndex(instr => instr.value === instrument.value);
+          const nextIndex = (currentIndex + 1) % INSTRUMENTS.length;
+          setInstrument(INSTRUMENTS[nextIndex]);
+        },
+        formatTime: (sec: number) => {
+          const minutes = Math.floor(sec / 60);
+          const seconds = Math.floor(sec % 60);
+          return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+        },
+        selectedInstruments,
+        setSelectedInstruments,
+        fragmentLength,
+        setFragmentLength,
+        volume,
+        setVolume,
+      }}
+    >
+      {children}
+    </MidiPlayerContext.Provider>
   );
 };
 
 export const useMidiPlayer = () => {
   const context = useContext(MidiPlayerContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useMidiPlayer must be used within a MidiPlayerProvider");
   }
   return context;
