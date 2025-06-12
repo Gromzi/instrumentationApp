@@ -40,7 +40,9 @@ type MidiPlayerContextType = {
   setFragmentLength: React.Dispatch<React.SetStateAction<number>>;
   volume: number;
   setVolume: React.Dispatch<React.SetStateAction<number>>;
-  instrumentOrder: string[]; // Dodajemy instrumentOrder do typu
+  instrumentOrder: string[];
+  instrumentRatings: Record<number, number>; // Indeks fragmentu -> ocena (-1, 0, 1)
+  handleRateFragment: (fragmentIndex: number, rating: number) => void;
 };
 
 const MidiPlayerContext = createContext<MidiPlayerContextType | undefined>(undefined);
@@ -64,6 +66,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   const volumeNodeRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [instrumentOrder, setInstrumentOrder] = useState<string[]>([]);
+  const [instrumentRatings, setInstrumentRatings] = useState<Record<number, number>>({});
 
   useEffect(() => {
     const initInstruments = async () => {
@@ -445,6 +448,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
           setCurrentInstrumentIndex(0);
           setCurrentStart(0);
           setCurrentTime(0);
+          setInstrumentRatings({}); // Reset ocen przy zatrzymaniu
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
           Tone.getTransport().stop();
           Tone.getTransport().position = 0;
@@ -471,6 +475,13 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         volume,
         setVolume,
         instrumentOrder,
+        instrumentRatings,
+        handleRateFragment: (fragmentIndex: number, rating: number) => {
+          setInstrumentRatings(prev => ({
+            ...prev,
+            [fragmentIndex]: rating
+          }));
+        },
       }}
     >
       {children}

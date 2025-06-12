@@ -24,7 +24,9 @@ const MusicPlayer = () => {
         setFragmentLength,
         volume,
         setVolume,
-        instrumentOrder
+        instrumentOrder,
+        instrumentRatings,
+        handleRateFragment
     } = useMidiPlayer();
 
     const handleInstrumentCheckbox = (value: string) => {
@@ -150,26 +152,49 @@ const MusicPlayer = () => {
                   {/* Nazwy instrumentów pod paskiem */}
                   <div style={{
                     position: 'relative',
-                    height: '20px',
+                    height: '70px',
                     marginTop: '8px',
                     fontSize: '12px',
                     color: '#fff'
                   }}>
                     {duration > 0 && fragmentLength > 0 && instrumentOrder.map((instrumentName, idx) => {
                       const instrument = INSTRUMENTS.find(i => i.value === instrumentName);
+                      const rating = instrumentRatings[idx] || 0;
+
+                      // Obliczanie szerokości fragmentu w procentach
+                      let width = 0;
+                      if( duration- (idx * fragmentLength)> fragmentLength){
+                          width= (fragmentLength / duration) * 100;
+                      }else{
+                            width = ((duration - (idx * fragmentLength)) / duration) * 100;
+                      }
+
                       return (
                         <div
                           key={idx}
                           style={{
                             position: 'absolute',
                             left: `${(idx * fragmentLength / duration) * 100}%`,
-                            // transform: 'translateX(-50%)',
                             whiteSpace: 'nowrap',
-                              // background: 'blue',
-                              width: `${100/(duration/fragmentLength)}%`,
+                            width: `${width}%`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1px',
+                            flexDirection: 'column',
                           }}
                         >
-                          {instrument?.label || instrumentName}
+                            <div>
+                                {/*Do zamiany na ikonę instrumentu*/}
+                                {instrument?.label || instrumentName}
+                            </div>
+                          <div>
+                              {rating !== 0 && (
+                                  <div style={{ transform: 'scale(0.9)' }}>
+                                      <RateIcon type={rating === 1 ? "like" : "dislike"} />
+                                  </div>
+                              )}
+                          </div>
+
                         </div>
                       );
                     })}
@@ -177,27 +202,33 @@ const MusicPlayer = () => {
               </div>
 
               <div className="controls">
-                  <RateIcon type="like" />
+                  <button
+                    className="control-button"
+                    onClick={() => {
+                      const currentFragment = Math.floor(currentTime / fragmentLength);
+                      handleRateFragment(currentFragment, instrumentRatings[currentFragment] === 1 ? 0 : 1);
+                    }}
+                  >
+                    <RateIcon type="like" />
+                  </button>
 
                   <button className="control-button play-pause-btn" id="playPauseBtn" onClick={handlePlayPause}>
                       <img src={playIcon} alt="Play icon" />
                   </button>
 
                   <button className="control-button play-pause-btn" id="stopBtn" onClick={handleStop}>
-                      {/*<img src={StopIcon} alt="Stop icon" />*/}
                       Stop
                   </button>
 
-                  {/*<button*/}
-                  {/*    className="control-button next-instrument-btn violin"*/}
-                  {/*    id="nextInstrumentBtn"*/}
-                  {/*    title="Next Instrument"*/}
-                  {/*    onClick={()=> handleNextInstrument()}*/}
-                  {/*>*/}
-                  {/*    <img src={InstrumentIcons.violin} alt="Next instrument icon" />*/}
-                  {/*</button>*/}
-
-                  <RateIcon type="dislike" />
+                  <button
+                    className="control-button"
+                    onClick={() => {
+                      const currentFragment = Math.floor(currentTime / fragmentLength);
+                      handleRateFragment(currentFragment, instrumentRatings[currentFragment] === -1 ? 0 : -1);
+                    }}
+                  >
+                    <RateIcon type="dislike" />
+                  </button>
               </div>
           </div>
 
