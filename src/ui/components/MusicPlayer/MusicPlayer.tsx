@@ -23,7 +23,8 @@ const MusicPlayer = () => {
         fragmentLength,
         setFragmentLength,
         volume,
-        setVolume
+        setVolume,
+        instrumentOrder
     } = useMidiPlayer();
 
     const handleInstrumentCheckbox = (value: string) => {
@@ -140,12 +141,39 @@ const MusicPlayer = () => {
                       id="progressFill"
                       style={{
                           width: (currentTime/duration)*100+"%",
-                          // background: '#4caf50',
                           height: 8,
                           zIndex: 1
                       }}
                   ></div>
-              </div>
+                  </div>
+
+                  {/* Nazwy instrumentów pod paskiem */}
+                  <div style={{
+                    position: 'relative',
+                    height: '20px',
+                    marginTop: '8px',
+                    fontSize: '12px',
+                    color: '#fff'
+                  }}>
+                    {duration > 0 && fragmentLength > 0 && instrumentOrder.map((instrumentName, idx) => {
+                      const instrument = INSTRUMENTS.find(i => i.value === instrumentName);
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            position: 'absolute',
+                            left: `${(idx * fragmentLength / duration) * 100}%`,
+                            // transform: 'translateX(-50%)',
+                            whiteSpace: 'nowrap',
+                              // background: 'blue',
+                              width: `${100/(duration/fragmentLength)}%`,
+                          }}
+                        >
+                          {instrument?.label || instrumentName}
+                        </div>
+                      );
+                    })}
+                  </div>
               </div>
 
               <div className="controls">
