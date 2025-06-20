@@ -1,3 +1,3 @@
 export interface RateButtonProps {
-  type: "like" | "dislike"
+  type: 'like' | 'dislike'
 }

@@ -23,7 +23,10 @@
   height: 6em;
   padding: 1.5em;
   will-change: filter;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 300ms;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    filter 300ms;
 }
 .icon:hover {
   filter: drop-shadow(0 0 2em #ffffffaa);
@@ -31,7 +34,7 @@
 
 .settings-icon {
   position: absolute;
-  inset:  0 0 auto auto;
+  inset: 0 0 auto auto;
   height: 4em;
   cursor: pointer;
 }
@@ -39,8 +42,6 @@
 .settings-icon:active {
   transform: scale(0.9);
 }
-
-
 
 @keyframes logo-spin {
   from {

@@ -1,6 +1,6 @@
-import osUtils from "os-utils"
-import os from "os"
-import fs from "fs"
+import osUtils from 'os-utils'
+import os from 'os'
+import fs from 'fs'
 
 const POLLING_INTERVAL = 500
 
@@ -24,13 +24,13 @@ const getRamUsage = () => {
 }
 
 function getStorageData() {
-  const stats = fs.statfsSync(process.platform === "win32" ? "C://" : "/")
+  const stats = fs.statfsSync(process.platform === 'win32' ? 'C://' : '/')
   const total = stats.bsize * stats.blocks
   const free = stats.bsize * stats.bfree
 
   return {
     total: Math.floor(total / 1_000_000_000),
-    usage: 1 - free / total,
+    usage: 1 - free / total
   }
 }
 
@@ -42,6 +42,6 @@ export const getStaticData = () => {
   return {
     totalStorage,
     cpuModel,
-    totalMemoryGB,
+    totalMemoryGB
   }
 }
