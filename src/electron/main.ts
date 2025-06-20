@@ -4,11 +4,11 @@ import { isDev } from './util.js'
 
 app.whenReady().then(() => {
   const mainWindow = new BrowserWindow({
-    width: 580,
-    minWidth: 580,
+    width: 1400,
+    minWidth: 1400,
 
-    height: 640,
-    minHeight: 640,
+    height: 960,
+    minHeight: 960,
 
     center: true,
 

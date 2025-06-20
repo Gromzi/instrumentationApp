@@ -1,7 +1,8 @@
 import RateIcon from '../RateButton/RateButton'
 import './MusicPlayerStyles.css'
 import playIcon from '../../assets/play.svg'
-import { InstrumentIcons } from '../../constants/InstrumentIconsImports'
+import stopIcon from '../../assets/stop.svg'
+import { IInstrumentIcons, InstrumentIcons } from '../../constants/InstrumentIconsImports'
 import { useMidiPlayer } from '../../hooks/useMidiPlayer.tsx'
 import React, { useState } from 'react'
 
@@ -54,8 +55,13 @@ const MusicPlayer = () => {
   return (
     <div>
       {/* Nowy UI do wyboru instrumentów i długości fragmentu */}
-      <div className="music-player-container" style={{ marginBottom: 16 }}>
-        <div>
+      <div
+        className="music-player-container"
+        style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: '24px' }}
+      >
+        <div
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
+        >
           <strong>Wybierz instrumenty:</strong>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {INSTRUMENTS.map((inst) => (
@@ -99,10 +105,21 @@ const MusicPlayer = () => {
         </div>
       </div>
 
-      <div className="music-player-container">
+      <div className="music-player-container" style={{ borderRadius: '20px 20px 0 0' }}>
         <div className="instrument-info">
-          <div className="current-instrument" id="currentInstrument">
-            {instrument?.label}
+          <div
+            className="current-instrument"
+            id="currentInstrument"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+          >
+            {`${instrument?.label}: `}
+
+            <img
+              src={InstrumentIcons[instrument?.value as keyof IInstrumentIcons]}
+              alt={`${instrument?.label}`}
+              width={64}
+              height={64}
+            />
           </div>
           <div className="song-title">{songTitle}</div>
         </div>
@@ -200,15 +217,14 @@ const MusicPlayer = () => {
         </div>
 
         <div className="controls">
-          <button
-            className="control-button"
+          <div
             onClick={() => {
               const currentFragment = Math.floor(currentTime / fragmentLength)
               handleRateFragment(currentFragment, instrumentRatings[currentFragment] === 1 ? 0 : 1)
             }}
           >
             <RateIcon type="like" />
-          </button>
+          </div>
 
           <button
             className="control-button play-pause-btn"
@@ -219,11 +235,10 @@ const MusicPlayer = () => {
           </button>
 
           <button className="control-button play-pause-btn" id="stopBtn" onClick={handleStop}>
-            Stop
+            <img src={stopIcon} alt="Stop icon" />
           </button>
 
-          <button
-            className="control-button"
+          <div
             onClick={() => {
               const currentFragment = Math.floor(currentTime / fragmentLength)
               handleRateFragment(
@@ -233,7 +248,7 @@ const MusicPlayer = () => {
             }}
           >
             <RateIcon type="dislike" />
-          </button>
+          </div>
         </div>
       </div>
     </div>
