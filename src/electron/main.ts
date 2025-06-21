@@ -7,12 +7,13 @@ app.whenReady().then(() => {
     width: 1400,
     minWidth: 1400,
 
-    height: 960,
-    minHeight: 960,
+    height: 1200,
+    minHeight: 1200,
 
     center: true,
 
     title: 'Wybieranie instrumentacji',
+    icon: path.join(app.getAppPath(), '/src/electron/icon.png'),
 
     webPreferences: {
       preload: path.join(app.getAppPath(), '/dist-electron/preload.js'),
