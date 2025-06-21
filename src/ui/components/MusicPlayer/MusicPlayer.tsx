@@ -27,7 +27,8 @@ const MusicPlayer = () => {
     setVolume,
     instrumentOrder,
     instrumentRatings,
-    handleRateFragment
+    handleRateFragment,
+      disableControls
   } = useMidiPlayer()
 
   const handleInstrumentCheckbox = (value: string) => {
@@ -70,6 +71,7 @@ const MusicPlayer = () => {
                   type="checkbox"
                   checked={selectedInstruments.includes(inst.value)}
                   onChange={() => handleInstrumentCheckbox(inst.value)}
+                  disabled={disableControls}
                 />
                 {inst.label}
               </label>
@@ -86,6 +88,7 @@ const MusicPlayer = () => {
               value={fragmentLength}
               onChange={handleFragmentLengthChange}
               style={{ width: 60, marginLeft: 8 }}
+              disabled={disableControls}
             />
           </label>
         </div>
@@ -230,6 +233,7 @@ const MusicPlayer = () => {
             className="control-button play-pause-btn"
             id="playPauseBtn"
             onClick={handlePlayPause}
+            disabled={disableControls}
           >
             <img src={playIcon} alt="Play icon" />
           </button>

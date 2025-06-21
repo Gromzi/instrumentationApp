@@ -43,6 +43,7 @@ type MidiPlayerContextType = {
   instrumentOrder: string[]
   instrumentRatings: Record<number, number> // Indeks fragmentu -> ocena (-1, 0, 1)
   handleRateFragment: (fragmentIndex: number, rating: number) => void
+    disableControls?: boolean
 }
 
 const MidiPlayerContext = createContext<MidiPlayerContextType | undefined>(undefined)
@@ -55,6 +56,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   const [instrument, setInstrument] = useState<InstrumentType>(INSTRUMENTS[0])
   const [songTitle, setSongTitle] = useState<string | null>(null)
   const [midiLoaded, setMidiLoaded] = useState(false)
+  const [disableControls, setDisableControls] = useState<boolean>(false)
   const samplerRef = useRef<any>(null)
   const loadedInstrumentsRef = useRef<{ [key: string]: any }>({})
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([
@@ -71,6 +73,16 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [instrumentOrder, setInstrumentOrder] = useState<string[]>([])
   const [instrumentRatings, setInstrumentRatings] = useState<Record<number, number>>({})
+  const [dislikedInstruments, setDislikedInstruments] = useState<Set<string>>(new Set())
+
+  // Funkcja do losowego wyboru instrumentu z puli, który nie jest taki sam jak poprzedni
+  const getRandomInstrument = (pool: string[], previousInstrument: string | null): string => {
+    const availableInstruments = pool.filter(instr => instr !== previousInstrument)
+    if (availableInstruments.length === 0) {
+      return pool[Math.floor(Math.random() * pool.length)]
+    }
+    return availableInstruments[Math.floor(Math.random() * availableInstruments.length)]
+  }
 
   useEffect(() => {
     const initInstruments = async () => {
@@ -173,7 +185,18 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
     }
   }, [instrument, loaded])
 
-  // Dodaj useEffect do aktualizacji czasu
+  // Dodajemy useEffect do aktualizacji aktualnego instrumentu
+  useEffect(() => {
+    if (instrumentOrder.length > 0) {
+      const currentFragment = Math.floor(currentTime / fragmentLength)
+      const currentInstrumentValue = instrumentOrder[currentFragment]
+      const matchingInstrument = INSTRUMENTS.find(i => i.value === currentInstrumentValue)
+      if (matchingInstrument && matchingInstrument.value !== instrument.value) {
+        setInstrument(matchingInstrument)
+      }
+    }
+  }, [currentTime, fragmentLength, instrumentOrder])
+
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null
 
@@ -208,7 +231,6 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
 
   const loadMidiFile = async (preservePlayback = false) => {
     try {
-      // Upewnij się, że sampler jest załadowany przed kontynuowaniem
       if (!samplerRef.current?.loaded) {
         console.log('Waiting for sampler to load...')
         await new Promise<void>((resolve) => {
@@ -221,9 +243,6 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         })
       }
 
-      console.log('Loading MIDI file...')
-      // const response = await fetch('/src/music/super_mario_64.mid');
-      // setSongTitle("Super Mario 64" || "Nieznany utwór");
       const response = await fetch('/src/music/pirates_of_the_caribbean.mid')
       setSongTitle("Pirates of the Caribbean - He's a Pirate" || 'Nieznany utwór')
 
@@ -240,22 +259,55 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         Tone.getTransport().position = 0
       }
 
-      console.log('Processing MIDI tracks...')
+      // Sortuj nuty według czasu
       const sortedNotes = [...midi.tracks[0].notes].sort((a, b) => a.time - b.time)
       const MINIMUM_TIME_DIFFERENCE = 0.001
 
+      // Mapowanie instrumentów
+      const instrumentMap: Record<string, string> = {
+        piano: 'piano',
+        guitar: 'guitar-acoustic',
+        flute: 'flute',
+        harp: 'harp',
+        violin: 'violin',
+        xylophone: 'xylophone',
+        clarinet: 'clarinet',
+        contrabass: 'contrabass',
+        cello: 'cello'
+      }
+
+      // Grupuj nuty według fragmentów czasowych
+      const notesByFragment: { [key: number]: any[] } = {}
       sortedNotes.forEach((note, index) => {
         if (index > 0 && note.time === sortedNotes[index - 1].time) {
           note.time += MINIMUM_TIME_DIFFERENCE
         }
 
-        Tone.getTransport().schedule((time) => {
-          if (samplerRef.current?.loaded) {
-            samplerRef.current.triggerAttackRelease(note.name, note.duration, time, note.velocity)
-          } else {
-            console.warn('Sampler not ready at playback time')
-          }
-        }, note.time)
+        const fragmentIndex = Math.floor(note.time / fragmentLength)
+        if (!notesByFragment[fragmentIndex]) {
+          notesByFragment[fragmentIndex] = []
+        }
+        notesByFragment[fragmentIndex].push(note)
+      })
+
+      // Dla każdego fragmentu, zaplanuj odtworzenie nut właściwym instrumentem
+      Object.entries(notesByFragment).forEach(([fragmentIndex, notes]) => {
+        const idx = parseInt(fragmentIndex)
+        const instrumentForFragment = instrumentOrder[idx] || instrumentOrder[0]
+        const samplerKey = instrumentMap[instrumentForFragment]
+
+        notes.forEach(note => {
+          Tone.getTransport().schedule((time) => {
+            if (loadedInstrumentsRef.current[samplerKey]?.loaded) {
+              loadedInstrumentsRef.current[samplerKey].triggerAttackRelease(
+                note.name,
+                note.duration,
+                time,
+                note.velocity
+              )
+            }
+          }, note.time)
+        })
       })
 
       setDuration(midi.duration)
@@ -275,6 +327,77 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
     }
   }
 
+  // Funkcja do przelosowania kolejki od określonego indeksu
+  const reshuffleFromIndex = (startIndex: number, dislikedInstrument: string) => {
+    // Dodaj nowy instrument do zbioru wykluczonych
+    setDislikedInstruments(prev => {
+      const newSet = new Set(prev)
+      newSet.add(dislikedInstrument)
+      return newSet
+    })
+
+    // Zachowujemy część przed indeksem startowym
+    const beforeSegment = instrumentOrder.slice(0, startIndex)
+
+    // Przygotowujemy pulę instrumentów do losowania (wykluczając wszystkie instrumenty z dislike)
+    let remainingInstruments = selectedInstruments.filter(
+      (inst) => !dislikedInstruments.has(inst) && inst !== dislikedInstrument
+    )
+
+    // Jeśli nie ma już dostępnych instrumentów, zwróć wcześniej
+    if (remainingInstruments.length === 0) {
+      console.warn('Nie ma więcej dostępnych instrumentów do losowania')
+      return
+    }
+
+    const fragmentsToFill = instrumentOrder.length - startIndex
+
+    // Obliczamy ile razy każdy instrument powinien się pojawić
+    const occurrencesPerInstrument = Math.floor(fragmentsToFill / remainingInstruments.length)
+    const remainingSlots = fragmentsToFill % remainingInstruments.length
+
+    // Tworzymy pulę instrumentów
+    let instrumentPool: string[] = []
+    remainingInstruments.forEach((instrument) => {
+      for (let i = 0; i < occurrencesPerInstrument; i++) {
+        instrumentPool.push(instrument)
+      }
+    })
+
+    // Dodajemy pozostałe miejsca
+    for (let i = 0; i < remainingSlots; i++) {
+      instrumentPool.push(remainingInstruments[i % remainingInstruments.length])
+    }
+
+    // Losujemy nową kolejność z uwzględnieniem poprzedniego instrumentu
+    let newOrder: string[] = []
+    let previousInstrument = beforeSegment[beforeSegment.length - 1] || null
+
+    while (instrumentPool.length > 0) {
+      // Filtrujemy instrumenty różne od poprzedniego
+      const availableInstruments = instrumentPool.filter((instr) => instr !== previousInstrument)
+
+      // Jeśli nie ma dostępnych instrumentów, bierzemy losowy z puli
+      const selectedInstrument =
+        availableInstruments.length > 0
+          ? availableInstruments[Math.floor(Math.random() * availableInstruments.length)]
+          : instrumentPool[Math.floor(Math.random() * instrumentPool.length)]
+
+      // Usuwamy wybrany instrument z puli
+      const index = instrumentPool.indexOf(selectedInstrument)
+      instrumentPool.splice(index, 1)
+
+      newOrder.push(selectedInstrument)
+      previousInstrument = selectedInstrument
+    }
+
+    // Łączymy segmenty
+    const finalOrder = [...beforeSegment, ...newOrder]
+    setInstrumentOrder(finalOrder)
+    console.log('Nowa kolejność:', finalOrder)
+    console.log('Wykluczone instrumenty:', [...dislikedInstruments, dislikedInstrument])
+  }
+
   return (
     <MidiPlayerContext.Provider
       value={{
@@ -289,67 +412,54 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
           try {
             if (!samplerRef.current?.loaded) return
             setPaused(false)
+            setDisableControls(true)
             const response = await fetch('/src/music/pirates_of_the_caribbean.mid')
             const arrayBuffer = await response.arrayBuffer()
             const midi = new Midi(arrayBuffer)
             setDuration(midi.duration)
 
             // --- LOSOWANIE KOLEJNOŚCI INSTRUMENTÓW ---
-            const fragmentCount = Math.ceil(midi.duration / fragmentLength)
-            let order: string[] = []
+            // Tylko jeśli kolejność jest pusta (pierwsze uruchomienie)
+            if (instrumentOrder.length === 0 || currentTime=== 0) {
+              const fragmentCount = Math.ceil(midi.duration / fragmentLength)
+              let order: string[] = []
 
-            // Oblicz minimalną liczbę wystąpień dla każdego instrumentu
-            const instrumentCount = selectedInstruments.length
-            const minOccurrences = Math.floor(fragmentCount / instrumentCount)
-            const remainingSlots = fragmentCount % instrumentCount
+              // Oblicz minimalną liczbę wystąpień dla każdego instrumentu
+              const instrumentCount = selectedInstruments.length
+              const minOccurrences = Math.floor(fragmentCount / instrumentCount)
+              const remainingSlots = fragmentCount % instrumentCount
 
-            // Najpierw przygotuj pulę instrumentów z odpowiednią liczbą wystąpień
-            const instrumentPool: string[] = []
-            selectedInstruments.forEach((instrument) => {
-              for (let i = 0; i < minOccurrences; i++) {
-                instrumentPool.push(instrument)
+              // Najpierw przygotuj pulę instrumentów z odpowiednią liczbą wystąpień
+              const instrumentPool: string[] = []
+              selectedInstruments.forEach((instrument) => {
+                for (let i = 0; i < minOccurrences; i++) {
+                  instrumentPool.push(instrument)
+                }
+              })
+
+              // Dodaj pozostałe miejsca
+              for (let i = 0; i < remainingSlots; i++) {
+                instrumentPool.push(selectedInstruments[i % selectedInstruments.length])
               }
-            })
 
-            // Dodaj pozostałe miejsca
-            for (let i = 0; i < remainingSlots; i++) {
-              instrumentPool.push(selectedInstruments[i % selectedInstruments.length])
-            }
+              // Tworzenie sekwencji bez powtórzeń
+              const tempPool = [...instrumentPool]
+              let previousInstrument: string | null = null
 
-            // Funkcja do losowego wyboru instrumentu z puli, który nie jest taki sam jak poprzedni
-            const getRandomInstrument = (
-              pool: string[],
-              previousInstrument: string | null
-            ): string => {
-              const availableInstruments = pool.filter((instr) => instr !== previousInstrument)
-              if (availableInstruments.length === 0) {
-                return pool[Math.floor(Math.random() * pool.length)]
+              while (tempPool.length > 0) {
+                const selectedInstrument = getRandomInstrument(tempPool, previousInstrument)
+                const index = tempPool.indexOf(selectedInstrument)
+                tempPool.splice(index, 1)
+                order.push(selectedInstrument)
+                previousInstrument = selectedInstrument
               }
-              return availableInstruments[Math.floor(Math.random() * availableInstruments.length)]
+
+              setInstrumentOrder(order)
+              console.log('Początkowa kolejność:', order)
             }
-
-            // Tworzenie sekwencji bez powtórzeń
-            const tempPool = [...instrumentPool]
-            let previousInstrument: string | null = null
-
-            while (tempPool.length > 0) {
-              const selectedInstrument = getRandomInstrument(tempPool, previousInstrument)
-              const index = tempPool.indexOf(selectedInstrument)
-              tempPool.splice(index, 1)
-              order.push(selectedInstrument)
-              previousInstrument = selectedInstrument
-            }
-
-            // Sprawdź rozkład instrumentów (do debugowania)
-            const distribution = order.reduce((acc: Record<string, number>, curr: string) => {
-              acc[curr] = (acc[curr] || 0) + 1
-              return acc
-            }, {})
-            console.log('Rozkład instrumentów:', distribution)
-
-            setInstrumentOrder(order)
-            console.log('Kolejność:', order)
-            // --- KONIEC LOSOWANIA ---
+            // --- KONIEC LOSOWANIA KOLEJNOŚCI INSTRUMENTÓW ---
+            // Resetuj oceny instrumentów
+            setInstrumentRatings({})
 
             let stopPlayback = false
 
@@ -365,16 +475,6 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
               cello: 'cello'
             }
 
-            // Dodajemy log do sprawdzenia aktualnego instrumentu
-            const getCurrentInstrument = (time: number) => {
-              const fragmentIndex = Math.floor(time / fragmentLength)
-              const currentInstrument = order[fragmentIndex] || order[0]
-              console.log(
-                `Time: ${time}, Fragment: ${fragmentIndex}, Instrument: ${currentInstrument}, Mapped: ${instrumentMap[currentInstrument]}`
-              )
-              return instrumentMap[currentInstrument] || 'piano'
-            }
-
             const playNextFragment = async (fragmentIdx: number, start: number) => {
               if (stopPlayback || paused || start >= midi.duration) {
                 setIsPlaying(false)
@@ -384,8 +484,8 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
                 return
               }
 
-              // Pobierz instrument z wylosowanej kolejności
-              const currentInstrument = order[fragmentIdx] || order[0]
+              // Pobierz instrument z aktualnej kolejności
+              const currentInstrument = instrumentOrder[fragmentIdx] || instrumentOrder[0]
               console.log(`Fragment ${fragmentIdx}: Using instrument ${currentInstrument}`)
 
               // Mapuj na właściwą nazwę instrumentu w Tone.js
@@ -406,7 +506,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
               Tone.getTransport().stop()
               Tone.getTransport().position = start
 
-              // Użyj wszystkich ścieżek MIDI, ponieważ filtrowanie po nazwie instrumentu nie jest potrzebne
+              // Użyj wszystkich ścieżek MIDI
               midi.tracks.forEach((track) => {
                 track.notes.forEach((note) => {
                   if (note.time >= start && note.time < start + fragmentLength) {
@@ -423,11 +523,13 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
                   }
                 })
               })
+
               setIsPlaying(true)
               setCurrentTime(start)
               setCurrentInstrumentIndex(fragmentIdx)
               setCurrentStart(start)
               Tone.getTransport().start(undefined, start)
+
               if (timeoutRef.current) clearTimeout(timeoutRef.current)
               timeoutRef.current = setTimeout(
                 () => {
@@ -451,19 +553,15 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
             console.error('Błąd podczas odtwarzania:', error)
           }
         },
-        handlePause: () => {
-          setIsPlaying(false)
-          setPaused(true)
-          Tone.getTransport().pause()
-          if (timeoutRef.current) clearTimeout(timeoutRef.current)
-        },
         handleStop: () => {
           setIsPlaying(false)
           setPaused(false)
+          setDisableControls(false)
           setCurrentInstrumentIndex(0)
           setCurrentStart(0)
           setCurrentTime(0)
           setInstrumentRatings({}) // Reset ocen przy zatrzymaniu
+          setDislikedInstruments(new Set()) // Reset wykluczonych instrumentów przy zatrzymaniu
           if (timeoutRef.current) clearTimeout(timeoutRef.current)
           Tone.getTransport().stop()
           Tone.getTransport().position = 0
@@ -492,11 +590,19 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         instrumentOrder,
         instrumentRatings,
         handleRateFragment: (fragmentIndex: number, rating: number) => {
-          setInstrumentRatings((prev) => ({
-            ...prev,
+          const newRatings = {
+            ...instrumentRatings,
             [fragmentIndex]: rating
-          }))
-        }
+          }
+          setInstrumentRatings(newRatings)
+
+          // Jeśli to dislike, przelosuj kolejkę od następnego fragmentu
+          if (rating === -1) {
+            const dislikedInstrument = instrumentOrder[fragmentIndex]
+            reshuffleFromIndex(fragmentIndex + 1, dislikedInstrument)
+          }
+        },
+        disableControls
       }}
     >
       {children}
