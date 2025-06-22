@@ -3,13 +3,19 @@ import likeIcon from '../../assets/like.svg'
 import dislikeIcon from '../../assets/dislike.svg'
 import './RateButtonStyles.css'
 
-const RateIcon = (props: RateButtonProps) => {
+const RateIcon = ({ displayOnly = false, type }: RateButtonProps) => {
   return (
     <div className="button-container">
-      {props.type === 'like' ? (
-        <img src={likeIcon} className="icon rate-icon like" alt="Like icon" />
+      {type === 'like' ? (
+        displayOnly ? (
+          <img src={likeIcon} className="rate-icon-display" alt="Like icon" />
+        ) : (
+          <img src={likeIcon} className="rate-icon like" alt="Like icon" />
+        )
+      ) : displayOnly ? (
+        <img src={dislikeIcon} className="rate-icon-display" alt="Dislike icon" />
       ) : (
-        <img src={dislikeIcon} className="icon rate-icon dislike" alt="Dislike icon" />
+        <img src={dislikeIcon} className="rate-icon dislike" alt="Dislike icon" />
       )}
     </div>
   )

@@ -28,7 +28,7 @@ const MusicPlayer = () => {
     instrumentOrder,
     instrumentRatings,
     handleRateFragment,
-      disableControls
+    disableControls
   } = useMidiPlayer()
 
   const handleInstrumentCheckbox = (value: string) => {
@@ -120,8 +120,7 @@ const MusicPlayer = () => {
             <img
               src={InstrumentIcons[instrument?.value as keyof IInstrumentIcons]}
               alt={`${instrument?.label}`}
-              width={64}
-              height={64}
+              className={'icon pulse glow'}
             />
           </div>
           <div className="song-title">{songTitle}</div>
@@ -202,14 +201,11 @@ const MusicPlayer = () => {
                       flexDirection: 'column'
                     }}
                   >
-                    <div>
-                      {/*Do zamiany na ikonę instrumentu*/}
-                      {instrument?.label || instrumentName}
-                    </div>
+                    <div>{instrument?.label || instrumentName}</div>
                     <div>
                       {rating !== 0 && (
                         <div style={{ transform: 'scale(0.9)' }}>
-                          <RateIcon type={rating === 1 ? 'like' : 'dislike'} />
+                          <RateIcon type={rating === 1 ? 'like' : 'dislike'} displayOnly />
                         </div>
                       )}
                     </div>

@@ -43,7 +43,7 @@ type MidiPlayerContextType = {
   instrumentOrder: string[]
   instrumentRatings: Record<number, number> // Indeks fragmentu -> ocena (-1, 0, 1)
   handleRateFragment: (fragmentIndex: number, rating: number) => void
-    disableControls?: boolean
+  disableControls?: boolean
 }
 
 const MidiPlayerContext = createContext<MidiPlayerContextType | undefined>(undefined)
@@ -68,7 +68,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState<number>(0)
   const [currentStart, setCurrentStart] = useState<number>(0)
   const [paused, setPaused] = useState<boolean>(false)
-  const [volume, setVolume] = useState<number>(80) // 0-100
+  const [volume, setVolume] = useState<number>(50) // 0-100
   const volumeNodeRef = useRef<any>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [instrumentOrder, setInstrumentOrder] = useState<string[]>([])
@@ -77,7 +77,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
 
   // Funkcja do losowego wyboru instrumentu z puli, który nie jest taki sam jak poprzedni
   const getRandomInstrument = (pool: string[], previousInstrument: string | null): string => {
-    const availableInstruments = pool.filter(instr => instr !== previousInstrument)
+    const availableInstruments = pool.filter((instr) => instr !== previousInstrument)
     if (availableInstruments.length === 0) {
       return pool[Math.floor(Math.random() * pool.length)]
     }
@@ -190,7 +190,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
     if (instrumentOrder.length > 0) {
       const currentFragment = Math.floor(currentTime / fragmentLength)
       const currentInstrumentValue = instrumentOrder[currentFragment]
-      const matchingInstrument = INSTRUMENTS.find(i => i.value === currentInstrumentValue)
+      const matchingInstrument = INSTRUMENTS.find((i) => i.value === currentInstrumentValue)
       if (matchingInstrument && matchingInstrument.value !== instrument.value) {
         setInstrument(matchingInstrument)
       }
@@ -296,7 +296,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         const instrumentForFragment = instrumentOrder[idx] || instrumentOrder[0]
         const samplerKey = instrumentMap[instrumentForFragment]
 
-        notes.forEach(note => {
+        notes.forEach((note) => {
           Tone.getTransport().schedule((time) => {
             if (loadedInstrumentsRef.current[samplerKey]?.loaded) {
               loadedInstrumentsRef.current[samplerKey].triggerAttackRelease(
@@ -330,7 +330,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   // Funkcja do przelosowania kolejki od określonego indeksu
   const reshuffleFromIndex = (startIndex: number, dislikedInstrument: string) => {
     // Dodaj nowy instrument do zbioru wykluczonych
-    setDislikedInstruments(prev => {
+    setDislikedInstruments((prev) => {
       const newSet = new Set(prev)
       newSet.add(dislikedInstrument)
       return newSet
@@ -420,7 +420,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
 
             // --- LOSOWANIE KOLEJNOŚCI INSTRUMENTÓW ---
             // Tylko jeśli kolejność jest pusta (pierwsze uruchomienie)
-            if (instrumentOrder.length === 0 || currentTime=== 0) {
+            if (instrumentOrder.length === 0 || currentTime === 0) {
               const fragmentCount = Math.ceil(midi.duration / fragmentLength)
               let order: string[] = []
 
