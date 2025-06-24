@@ -43,6 +43,7 @@ type MidiPlayerContextType = {
   instrumentRatings: Record<number, number> // Indeks fragmentu -> ocena (-1, 0, 1)
   handleRateFragment: (fragmentIndex: number, rating: number) => void
   disableControls?: boolean
+  isRatingDisabled: boolean
 }
 
 const MidiPlayerContext = createContext<MidiPlayerContextType | undefined>(undefined)

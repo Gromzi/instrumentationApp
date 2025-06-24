@@ -222,7 +222,7 @@ const MusicPlayer = () => {
               cursor: isRatingDisabled ? 'not-allowed' : 'pointer'
             }}
           >
-            <RateIcon type="like" disabled={isRatingDisabled} />
+            <RateIcon type="like" />
           </div>
 
           <button
@@ -251,7 +251,7 @@ const MusicPlayer = () => {
               cursor: isRatingDisabled ? 'not-allowed' : 'pointer'
             }}
           >
-            <RateIcon type="dislike" disabled={isRatingDisabled} />
+            <RateIcon type="dislike" />
           </div>
         </div>
       </div>
