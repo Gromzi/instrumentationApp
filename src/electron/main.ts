@@ -6,13 +6,15 @@ app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark'
 
   const mainWindow = new BrowserWindow({
-    width: 1400,
-    minWidth: 1400,
+    width: 1800,
+    minWidth: 1800,
 
     height: 1200,
     minHeight: 1200,
 
     center: true,
+    autoHideMenuBar: true,
+    enableLargerThanScreen: false,
 
     title: 'Instrumentacja utworów muzycznych',
     icon: path.join(app.getAppPath(), '/src/electron/icon.png'),
