@@ -556,18 +556,18 @@ class SampleLibraryClass {
       }
     }
     this.ext = newExt
-    console.log('sample extensions set to ' + this.ext)
+    // console.log('sample extensions set to ' + this.ext)
   }
 
   public load(options: LoadOptions): { [key: string]: Tone.Sampler } {
     const instruments = options.instruments || this.list
     const baseUrl = options.baseUrl || this.baseUrl
 
-    console.log('Loading samples with options:', {
-      instruments,
-      baseUrl,
-      ext: this.ext
-    })
+    // console.log('Loading samples with options:', {
+    //   instruments,
+    //   baseUrl,
+    //   ext: this.ext
+    // })
 
     const result: { [key: string]: Tone.Sampler } = {}
 
@@ -577,7 +577,7 @@ class SampleLibraryClass {
         continue
       }
 
-      console.log(`Creating sampler for ${instrument}...`)
+      // console.log(`Creating sampler for ${instrument}...`)
       let samples = { ...this.samples[instrument] }
 
       if (this.minify || options.minify) {
@@ -591,14 +591,14 @@ class SampleLibraryClass {
         urls[note] = file.replace('.[mp3|ogg]', '.mp3')
       }
 
-      console.log(`Sample URLs for ${instrument}:`, urls)
+      // console.log(`Sample URLs for ${instrument}:`, urls)
 
       try {
         result[instrument] = new Tone.Sampler({
           urls,
           baseUrl: baseUrl + instrument + '/',
           onload: () => {
-            console.log(`${instrument} samples loaded successfully`)
+            // console.log(`${instrument} samples loaded successfully`)
             if (options.onload) {
               options.onload()
             }
@@ -607,7 +607,7 @@ class SampleLibraryClass {
             console.error(`Error loading ${instrument} samples:`, error)
           }
         })
-        console.log(`Sampler created for ${instrument}`)
+        // console.log(`Sampler created for ${instrument}`)
       } catch (error) {
         console.error(`Error creating sampler for ${instrument}:`, error)
       }
