@@ -29,7 +29,6 @@ type MidiPlayerContextType = {
   instrument: InstrumentType
   INSTRUMENTS: InstrumentType[]
   handleStart: () => Promise<void>
-  handlePause: () => void
   handleStop: () => void
   handleInstrumentChange: (to: InstrumentType) => Promise<void>
   handleNextInstrument: () => Promise<void>
@@ -74,6 +73,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   const [instrumentOrder, setInstrumentOrder] = useState<string[]>([])
   const [instrumentRatings, setInstrumentRatings] = useState<Record<number, number>>({})
   const [dislikedInstruments, setDislikedInstruments] = useState<Set<string>>(new Set())
+  const [isRatingDisabled, setIsRatingDisabled] = useState<boolean>(false)
 
   // Funkcja do losowego wyboru instrumentu z puli, który nie jest taki sam jak poprzedni
   const getRandomInstrument = (pool: string[], previousInstrument: string | null): string => {
@@ -398,6 +398,17 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
     console.log('Wykluczone instrumenty:', [...dislikedInstruments, dislikedInstrument])
   }
 
+  // Dodajemy useEffect do resetowania blokady ocen przy zmianie fragmentu
+  useEffect(() => {
+    const currentFragment = Math.floor(currentTime / fragmentLength)
+    const lastRatedFragment = Math.floor((currentTime - 0.1) / fragmentLength) // Sprawdzamy poprzedni fragment
+
+    // Odblokuj ocenianie gdy zmienił się fragment
+    if (currentFragment !== lastRatedFragment) {
+      setIsRatingDisabled(false)
+    }
+  }, [currentTime, fragmentLength])
+
   return (
     <MidiPlayerContext.Provider
       value={{
@@ -589,12 +600,16 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         setVolume,
         instrumentOrder,
         instrumentRatings,
+        isRatingDisabled,
         handleRateFragment: (fragmentIndex: number, rating: number) => {
+          if (isRatingDisabled) return
+
           const newRatings = {
             ...instrumentRatings,
             [fragmentIndex]: rating
           }
           setInstrumentRatings(newRatings)
+          setIsRatingDisabled(true) // Blokuj ocenianie po ocenie
 
           // Jeśli to dislike, przelosuj kolejkę od następnego fragmentu
           if (rating === -1) {

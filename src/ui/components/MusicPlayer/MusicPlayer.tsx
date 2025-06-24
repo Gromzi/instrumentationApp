@@ -9,7 +9,6 @@ import React, { useState } from 'react'
 const MusicPlayer = () => {
   const {
     handleStart,
-    handlePause,
     handleStop,
     handleNextInstrument,
     instrument,
@@ -28,7 +27,8 @@ const MusicPlayer = () => {
     instrumentOrder,
     instrumentRatings,
     handleRateFragment,
-    disableControls
+    disableControls,
+    isRatingDisabled
   } = useMidiPlayer()
 
   const handleInstrumentCheckbox = (value: string) => {
@@ -46,11 +46,7 @@ const MusicPlayer = () => {
   }
 
   const handlePlayPause = () => {
-    if (isPlaying) {
-      handlePause()
-    } else {
-      handleStart()
-    }
+    handleStart()
   }
 
   return (
@@ -221,8 +217,12 @@ const MusicPlayer = () => {
               const currentFragment = Math.floor(currentTime / fragmentLength)
               handleRateFragment(currentFragment, instrumentRatings[currentFragment] === 1 ? 0 : 1)
             }}
+            style={{
+              opacity: isRatingDisabled ? 0.5 : 1,
+              cursor: isRatingDisabled ? 'not-allowed' : 'pointer'
+            }}
           >
-            <RateIcon type="like" />
+            <RateIcon type="like" disabled={isRatingDisabled} />
           </div>
 
           <button
@@ -246,8 +246,12 @@ const MusicPlayer = () => {
                 instrumentRatings[currentFragment] === -1 ? 0 : -1
               )
             }}
+            style={{
+              opacity: isRatingDisabled ? 0.5 : 1,
+              cursor: isRatingDisabled ? 'not-allowed' : 'pointer'
+            }}
           >
-            <RateIcon type="dislike" />
+            <RateIcon type="dislike" disabled={isRatingDisabled} />
           </div>
         </div>
       </div>
