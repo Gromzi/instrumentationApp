@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './SelectSongSectionStyles.css'
+import { useMidiPlayer } from '../../hooks/useMidiPlayer'
 
 interface ISong {
   value: string
@@ -7,30 +8,13 @@ interface ISong {
 }
 
 const songs: ISong[] = [
-  { value: 'pirates', label: "Pirates of the Caribbean - He's a Pirate" },
-  { value: 'tetris', label: 'Tetris Theme' },
-  { value: 'mario', label: 'Super Mario Bros Theme' },
-  { value: 'zelda', label: 'The Legend of Zelda - Main Theme' },
-  { value: 'pokemon', label: 'Pokemon Theme Song' },
-  { value: 'starwars', label: 'Star Wars - Imperial March' },
-  { value: 'harry', label: "Harry Potter - Hedwig's Theme" },
-  { value: 'mission', label: 'Mission Impossible Theme' },
-  { value: 'pink', label: 'Pink Panther Theme' },
-  { value: 'james', label: 'James Bond Theme' }
+  { value: 'pirates_of_the_caribbean.mid', label: "Pirates of the Caribbean - He's a Pirate" },
+  { value: 'super_mario_64.mid', label: 'Super Mario Bros Theme' },
+  { value: 'toto_africa.mid', label: 'Toto - Africa' }
 ]
 
-interface SelectSongSectionProps {
-  onSongSelect?: (song: ISong) => void
-  defaultSong?: string
-}
-
-const SelectSongSection: React.FC<SelectSongSectionProps> = ({
-  onSongSelect,
-  defaultSong = 'pirates'
-}) => {
-  const [selectedSong, setSelectedSong] = useState<ISong>(
-    songs.find((song) => song.value === defaultSong) || songs[0]
-  )
+const SelectSongSection: React.FC = () => {
+  const { currentSong, handleSongChange } = useMidiPlayer()
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [focusedIndex, setFocusedIndex] = useState<number>(-1)
 
@@ -87,10 +71,9 @@ const SelectSongSection: React.FC<SelectSongSectionProps> = ({
   }
 
   const handleSongSelect = (song: ISong) => {
-    setSelectedSong(song)
+    handleSongChange(song)
     setIsOpen(false)
     setFocusedIndex(-1)
-    onSongSelect?.(song)
   }
 
   return (
@@ -107,7 +90,7 @@ const SelectSongSection: React.FC<SelectSongSectionProps> = ({
             aria-haspopup="listbox"
             tabIndex={0}
           >
-            <span className="selected-value">{selectedSong.label}</span>
+            <span className="selected-value">{currentSong.label}</span>
             <span className="dropdown-arrow">▼</span>
           </div>
 
@@ -116,11 +99,11 @@ const SelectSongSection: React.FC<SelectSongSectionProps> = ({
               <div
                 key={song.value}
                 className={`dropdown-item ${
-                  selectedSong.value === song.value ? 'selected' : ''
+                  currentSong.value === song.value ? 'selected' : ''
                 } ${focusedIndex === index ? 'focused' : ''}`}
                 onClick={() => handleSongSelect(song)}
                 role="option"
-                aria-selected={selectedSong.value === song.value}
+                aria-selected={currentSong.value === song.value}
                 tabIndex={-1}
               >
                 {song.label}

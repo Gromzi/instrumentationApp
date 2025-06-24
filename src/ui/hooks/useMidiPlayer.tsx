@@ -8,6 +8,11 @@ type InstrumentType = {
   value: string
 }
 
+interface ISong {
+  value: string
+  label: string
+}
+
 const INSTRUMENTS: InstrumentType[] = [
   { label: 'Pianino', value: 'piano' },
   { label: 'Gitara', value: 'guitar' },
@@ -44,6 +49,8 @@ type MidiPlayerContextType = {
   handleRateFragment: (fragmentIndex: number, rating: number) => void
   disableControls?: boolean
   isRatingDisabled: boolean
+  currentSong: ISong
+  handleSongChange: (song: ISong) => Promise<void>
 }
 
 const MidiPlayerContext = createContext<MidiPlayerContextType | undefined>(undefined)
@@ -75,6 +82,10 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
   const [instrumentRatings, setInstrumentRatings] = useState<Record<number, number>>({})
   const [dislikedInstruments, setDislikedInstruments] = useState<Set<string>>(new Set())
   const [isRatingDisabled, setIsRatingDisabled] = useState<boolean>(false)
+  const [currentSong, setCurrentSong] = useState<ISong>({
+    value: 'pirates_of_the_caribbean.mid',
+    label: "Pirates of the Caribbean - He's a Pirate"
+  })
 
   // Funkcja do losowego wyboru instrumentu z puli, który nie jest taki sam jak poprzedni
   const getRandomInstrument = (pool: string[], previousInstrument: string | null): string => {
@@ -244,8 +255,8 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         })
       }
 
-      const response = await fetch('/src/music/pirates_of_the_caribbean.mid')
-      setSongTitle("Pirates of the Caribbean - He's a Pirate" || 'Nieznany utwór')
+      const response = await fetch(`/src/music/${currentSong.value}`)
+      setSongTitle(currentSong.label || 'Nieznany utwór')
 
       const arrayBuffer = await response.arrayBuffer()
       const midi = new Midi(arrayBuffer)
@@ -425,7 +436,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
             if (!samplerRef.current?.loaded) return
             setPaused(false)
             setDisableControls(true)
-            const response = await fetch('/src/music/pirates_of_the_caribbean.mid')
+            const response = await fetch(`/src/music/${currentSong.value}`)
             const arrayBuffer = await response.arrayBuffer()
             const midi = new Midi(arrayBuffer)
             setDuration(midi.duration)
@@ -618,7 +629,17 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
             reshuffleFromIndex(fragmentIndex + 1, dislikedInstrument)
           }
         },
-        disableControls
+        disableControls,
+        currentSong,
+        handleSongChange: async (song: ISong) => {
+          setCurrentSong(song)
+          await loadMidiFile(false)
+          setCurrentTime(0)
+          setCurrentInstrumentIndex(0)
+          setCurrentStart(0)
+          setInstrumentRatings({})
+          setDislikedInstruments(new Set())
+        }
       }}
     >
       {children}

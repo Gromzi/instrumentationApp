@@ -20,7 +20,7 @@ app.whenReady().then(() => {
     icon: path.join(app.getAppPath(), '/src/electron/icon.png'),
 
     webPreferences: {
-      preload: path.join(app.getAppPath(), '/dist-electron/preload.js'),
+      // preload: path.join(app.getAppPath(), '/dist-electron/preload.js'),
       nodeIntegration: false,
       contextIsolation: true
     }
