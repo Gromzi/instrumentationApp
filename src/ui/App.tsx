@@ -11,7 +11,7 @@ function App() {
       <div style={{ display: 'flex', flexDirection: 'row', gap: '24px' }}>
         <div>
           <div className="instrument-icon-section">
-            <SelectSongSection onSongSelect={() => console.log('Konrados')} />
+            <SelectSongSection />
           </div>
 
           <div className="music-slider-section">
