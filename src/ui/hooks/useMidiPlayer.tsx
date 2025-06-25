@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import * as Tone from 'tone'
 import { Midi } from '@tonejs/midi'
 import { SampleLibrary } from '../functions/ToneInstruments.ts'
+import { app } from 'electron'
+import path from 'path'
 
 type InstrumentType = {
   label: string

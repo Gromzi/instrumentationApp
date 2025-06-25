@@ -1,9 +1,14 @@
 import { app, BrowserWindow, nativeTheme } from 'electron'
 import path from 'path'
 import { isDev } from './util.js'
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark'
+
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
 
   const mainWindow = new BrowserWindow({
     width: 1800,
