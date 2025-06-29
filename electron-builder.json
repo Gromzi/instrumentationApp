@@ -15,5 +15,9 @@
   },
   "win": {
     "target": ["portable", "msi"]
+  },
+  "extraResources": {
+    "from": "public/*",
+    "to": "resources"
   }
 }

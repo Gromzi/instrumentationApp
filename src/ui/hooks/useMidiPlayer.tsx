@@ -113,7 +113,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
           'contrabass',
           'cello'
         ],
-        baseUrl: '/src/samples/' // Dodano ukośnik na początku
+        baseUrl: 'samples/' // Dodano ukośnik na początku
       })
 
       // Utwórz Tone.Volume i podepnij do każdego samplera
@@ -257,7 +257,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
         })
       }
 
-      const response = await fetch(`/src/music/${currentSong.value}`)
+      const response = await fetch(`music/${currentSong.value}`)
       setSongTitle(currentSong.label || 'Nieznany utwór')
 
       const arrayBuffer = await response.arrayBuffer()
@@ -438,7 +438,7 @@ export const MidiPlayerProvider = ({ children }: { children: React.ReactNode }) 
             if (!samplerRef.current?.loaded) return
             setPaused(false)
             setDisableControls(true)
-            const response = await fetch(`/src/music/${currentSong.value}`)
+            const response = await fetch(`music/${currentSong.value}`)
             const arrayBuffer = await response.arrayBuffer()
             const midi = new Midi(arrayBuffer)
             setDuration(midi.duration)
